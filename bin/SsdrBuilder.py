@@ -233,7 +233,7 @@ class ssdrBuildCmd(bpy.types.Operator):
                 t2 = ssdr.getBoneTranslation(b, 0)
                 q2 = ssdr.getBoneRotation(b, 0)
                 
-                mat7 = (Quaternion((q2[3], q2[0], q2[1], q2[2])).to_matrix().to_4x4() * Matrix.Translation((-t2[0], -t2[1], -t2[2])).to_4x4() * Matrix.Translation((t[0], t[1], t[2])).to_4x4() * Quaternion((q[3], q[0], q[1], q[2])).to_matrix().to_4x4())
+                mat7 = (Quaternion((-q2[3], q2[0], q2[1], q2[2])).to_matrix().to_4x4() * Matrix.Translation((-t2[0], -t2[1], -t2[2])).to_4x4() * Matrix.Translation((t[0], t[1], t[2])).to_4x4() * Quaternion((q[3], q[0], q[1], q[2])).to_matrix().to_4x4())
                 
                 
                 pbone.matrix = mat7
