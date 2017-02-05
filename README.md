@@ -1,9 +1,13 @@
 # SSDR4Blender
-<A href="https://github.com/mukailab/ssdr4maya">SSDR4Maya</A>をBlenderへ移植したもの
+* <A href="https://github.com/mukailab/ssdr4maya">SSDR4Maya</A>をBlenderへ移植したもの
+* 頂点アニメーションをボーンアニメーションに変換するソフト
+
+## ダウンロード
+<A href="https://github.com/devil-tamachan/ssdr4blender/releases">こちらからどうぞ</A>
 
 ## 対応環境
 * Windows XP以上 (自力でDLLをコンパイルできれば、Mac/Linuxも対応)
-* Blender2.65以上 (bl_info書き換えれば2.5.0以上でも動くかも)
+* 32/64ビットのBlender2.65以上 (bl_info書き換えれば2.5.0以上でも動くかも)
 * Python3～ (.pydではなく普通のcdeclコールのdllをctypesから呼び出ししてます。Pythonのバージョンが変わっても再コンパイルの必要は無いです)
 
 ## インストール方法
