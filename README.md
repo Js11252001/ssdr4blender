@@ -1,67 +1,43 @@
-# SSDR4Maya
-本コードは、Binh Huy Le氏とZhigang Deng氏による論文[Smooth Skinning Decomposition with Rigid Bones](http://graphics.cs.uh.edu/ble/papers/2012sa-ssdr/ "SSDR paper")のMaya2016用プラグイン実装のサンプルです。
+# SSDR4Blender
+<A href="https://github.com/mukailab/ssdr4maya">SSDR4Maya</A>をBlenderへ移植したもの
 
- 1. Binh Huy Le and Zhigang Deng, Smooth Skinning Decomposition with Rigid Bones, ACM Transactions on Graphics, 31 (6), (2012), 199:1-199:10.
- 2. Binh Huy Le and Zhigang Deng, Robust and Accurate Skeletal Rigging from Mesh Sequences, ACM Transactions on Graphics, 33 (4), (2014), 84:1-84:10.
- 3. 向井 智彦, スキニング分解, Computer Graphics Gems JP 2015 7章：スキニング分解（ボーンデジタル）, 2015.
+## 対応環境
+* Windows XP以上 (自力でDLLをコンパイルできれば、Mac/Linuxも対応)
+* Blender2.65以上 (bl_info書き換えれば2.5.0以上でも動くかも)
+* Python3～ (.pydではなく普通のcdeclコールのdllをctypesから呼び出ししてます。Pythonのバージョンが変わっても再コンパイルの必要は無いです)
 
 ## インストール方法
-* binフォルダにあるビルド済みパッケージ一式を、Mayaのプラグインパス（MAYA_PLUG_IN_PATH）が通っているフォルダに置きます。
+* binフォルダにあるビルド済みパッケージ一式を、<A href="https://wiki.blender.org/index.php/Doc:JA/2.6/Manual/Extensions/Python/Add-Ons">Blenderのaddonsフォルダへコピーしてください</A>
 
-## 使用方法
-このプラグインは、各フレームのシェイプをスキン＋ボーン姿勢で近似します。隣り合うフレーム同士は必ずしも滑らかに変化する必要はありません。言い換えれば、バラバラのポーズが1フレームずつ記録されているようなシーケンスでも処理可能です。
-
-手元ではnClothシミュレーションへのボーンアニメーションへのベイク、[Mesh Data from 
-Deformation Transfer for Triangle Meshes](https://people.csail.mit.edu/sumner/research/deftransfer/data.html "MeshData@CSAIL")の公開データ、およびMaya Muscleなどの少数のデータでのみテストしています。
+## 使用上の注意
+* あらかじめ頂点数の変化するModifierを事前にBakeしてください。
+* あらかじめCloth/Softbody Physicsを事前にBakeしてください。<A href="http://blender.stackexchange.com/questions/42910/how-to-bake-object-with-cloth-simulation-and-subsurf-not-applied-having-troub">標準でBakeする機能は無いです。.mddを経由してShape-keyアニメーションに変換してください。.mddを読み込んだあと、必ずPhysicsタブから物理演算を無効にしてください（２重効果になります）</A>
 
 ###利用手順
-1. アニメーション開始時間と終了時間を指定します。
- - 指定した時間範囲のみが処理されます。
- - アニメーションが設定されていない余分な範囲も選択されていると、計算時間が長くなったり、計算が不安定になるなどの不具合が生じます。
-2. 処理対象となるシェイプを選択します。
-3. メニューの[MukaiLab]->[SSDR]->[build]より処理を開始します。
-4. 処理が終わったら、コマンドラインに近似誤差（RMSE）と使用しているボーン数（#Bones）が表示されます。
- - 最小ボーン数や最大インフルーエンス数などの計算パラメータは、mlSsdrBuilder.py を直接編集することで変更できます。
-5. 変換後のスキンとボーンは「SsdrResult」グループにまとめられます。
- - 変換前のシェイプと同じ位置に表示されています。
- - 全てのボーンは、バインドポーズでは必ずワールド座標系の原点に配置されます。原点中心の動き（変位）がシェイプに作用するイメージです。
-
-利用イメージは下記のYouTubeビデオもご参照下さい。
-
-[![SSDR4Maya](http://img.youtube.com/vi/ZPKKR24gGbg/0.jpg)](http://www.youtube.com/watch?v=ZPKKR24gGbg)
+1. 処理対象となるシェイプを選択します。
+2. メニューの[Object]->[SSDR]より処理を開始します。
+3. 処理が終わったら、左下部分でパラメータを調整できます。numMaxIterationsを納得できる最小値に設定してください。頂点数が少なく結果がおかしい場合numMinBonesを減らして見てください。
 
 ### 計算パラメータの調整
-SSDRの計算パラメータは、mlSsdrBuilder.py内、ssdrBuildCmdクラスの冒頭にまとめられています。
 
-- numMaxInfluences： 各頂点当たりに割り当てられる最大ボーン数
 - numMinBones： 頂点アニメーション近似に用いる最小ボーン数
 - numMaxIterations： 最大反復回数
+- numMaxInfluences： 各頂点当たりに割り当てられる最大ボーン数
 
 これら3つのパラメータの変更することで、それにともなう計算結果の変化を確認できると思います。現状では、最小ボーン数に大きな値を与えると計算が破綻することを確認しています。
 
 ## ビルドと実行方法
-拡張ライブラリ ssdr.pyd は Visual Studio 2013 Professional プロジェクトとして作成しています。ビルドには、外部ライブラリとして [Eigen](http://eigen.tuxfamily.org/ "Eigen")、 [QuadProg++](http://quadprog.sourceforge.net/ "QuadProg++")、[Boost](http://www.boost.org/ "Boost") 、および[Maya 2016.3 Developer Kit](https://apps.autodesk.com/MAYA/ja/Detail/Index?id=6303159649350432165&appLang=en&os=Win64 "MayaDevKit")が必要です。なお、ビルドおよび実行テストには Eigen 3.2.8、QuadProg++ 1.2.1、およびBoost 1.6.1 を用いました。
+* 拡張ライブラリ ssdr.dll は 外部ライブラリとして [Eigen](http://eigen.tuxfamily.org/ "Eigen")、 [QuadProg++](http://quadprog.sourceforge.net/ "QuadProg++")が必要です。
+* EigenはCMakeする必要はありません！（とんでもなくめちゃくちゃ時間がかかります。コンパイルする必要はありません。Includeフォルダに設定するだけで良いです）
+* QuadProg++.cc、727行あたりのvoid cholesky_decomposition(Matrix<double>& A)関数の、throw～、exit(-1);の2行をコメントアウトしてください
+
 
 ###ビルド手順
 
 1. Eigenのインストールフォルダにインクルードパスを通す。
-2. Boostのインストールフォルダにインクルードパスを通す。
-3. //MAYA_LOCATION/include および //MAYA_LOCATION/include/python2.7 フォルダにインクルードパスを通す。
 4. QuadProg++をダウンロードし、下記4つのファイルをssdrフォルダにコピーする。
  * QuadProg++.hh
  * QuadProg++.cc
  * Array.hh
  * Array.cc
-5. Visual Studio 2013上でビルド＆実行
-
-### 開発＆テスト環境
-* Windows 10 Pro
-* Maya 2016 SP6
-* Visual Studio 2013 Update 5
-* Maya 2016.3 Developer Kit
-* Eigen 3.2.8
-* QuadProg++ 1.2.1
-* Boost 1.6.1
-
-## 変更履歴
-1. 2016/07/06 初版公開
+5. Visual Studio 上でビルド＆実行

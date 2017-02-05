@@ -1,13 +1,15 @@
 #include <vector>
 #include <map>
 #include <string>
-#include <boost/python.hpp>
+//#include <boost/python.hpp>
 
 #include "SSDR.h"
 
+#define DLLEXPORT extern "C" __declspec(dllexport)
+
 SSDR::Output ssdrOutput;
 
-double build(int numMinBones, int numMaxInfluences, int numMaxIterations, boost::python::list bindVertices, boost::python::list animVertices, int numVertices, int numFrames)
+DLLEXPORT double build(int numMinBones, int numMaxInfluences, int numMaxIterations, float *bindVertices, float *animVertices, int numVertices, int numFrames)
 {
     SSDR::Parameter ssdrParam;
     ssdrParam.numMaxInfluences = numMaxInfluences;
@@ -21,17 +23,17 @@ double build(int numMinBones, int numMaxInfluences, int numMaxIterations, boost:
     ssdrInput.sample.resize(ssdrInput.numVertices * numFrames);
     for (int vid = 0; vid < ssdrInput.numVertices; ++vid)
     {
-        ssdrInput.bindModel[vid].x = boost::python::extract<float>(bindVertices[vid * 3 + 0]);
-        ssdrInput.bindModel[vid].y = boost::python::extract<float>(bindVertices[vid * 3 + 1]);
-        ssdrInput.bindModel[vid].z = boost::python::extract<float>(bindVertices[vid * 3 + 2]);
+        ssdrInput.bindModel[vid].x = bindVertices[vid * 3 + 0];
+        ssdrInput.bindModel[vid].y = bindVertices[vid * 3 + 1];
+        ssdrInput.bindModel[vid].z = bindVertices[vid * 3 + 2];
     }
     for (int f = 0; f < numFrames; ++f)
     {
         for (int vid = 0; vid < ssdrInput.numVertices; ++vid)
         {
-            ssdrInput.sample[f * numVertices + vid].x = boost::python::extract<float>(animVertices[(f * numVertices + vid) * 3 + 0]);
-            ssdrInput.sample[f * numVertices + vid].y = boost::python::extract<float>(animVertices[(f * numVertices + vid) * 3 + 1]);
-            ssdrInput.sample[f * numVertices + vid].z = boost::python::extract<float>(animVertices[(f * numVertices + vid) * 3 + 2]);
+            ssdrInput.sample[f * numVertices + vid].x = animVertices[(f * numVertices + vid) * 3 + 0];
+            ssdrInput.sample[f * numVertices + vid].y = animVertices[(f * numVertices + vid) * 3 + 1];
+            ssdrInput.sample[f * numVertices + vid].z = animVertices[(f * numVertices + vid) * 3 + 2];
         }
     }
 
@@ -39,56 +41,63 @@ double build(int numMinBones, int numMaxInfluences, int numMaxIterations, boost:
     return std::sqrt(sqe / ssdrInput.numVertices);
 }
 
-boost::python::list getSkinningWeight()
+DLLEXPORT double* getSkinningWeight()
 {
-    boost::python::list skinningWeight;
-    for (auto it = ssdrOutput.weight.begin(); it != ssdrOutput.weight.end(); ++it)
+    size_t num = ssdrOutput.weight.size();
+    double *skinningWeight = (double *)malloc(sizeof(double) * num);
+    if(skinningWeight==NULL)return NULL;
+    
+    size_t i=0;
+    for (auto it = ssdrOutput.weight.begin(); it != ssdrOutput.weight.end(); ++it,i++)
     {
-        skinningWeight.append(*it);
+        skinningWeight[i]=*it;
     }
     return skinningWeight;
 }
 
-boost::python::list getSkinningIndex()
+DLLEXPORT int* getSkinningIndex()
 {
-    boost::python::list skinningIndex;
-    for (auto it = ssdrOutput.index.begin(); it != ssdrOutput.index.end(); ++it)
+    size_t num = ssdrOutput.index.size();
+    int *skinningIndex = (int *)malloc(sizeof(int) * num);
+    if(skinningIndex==NULL)return NULL;
+    
+    size_t i=0;
+    for (auto it = ssdrOutput.index.begin(); it != ssdrOutput.index.end(); ++it,i++)
     {
-        skinningIndex.append(*it);
+        skinningIndex[i]=*it;
     }
     return skinningIndex;
 }
 
-int getNumBones()
+DLLEXPORT int getNumBones()
 {
     return ssdrOutput.numBones;
 }
 
-boost::python::list getBoneTranslation(int boneIdx, int frame)
+DLLEXPORT float* getBoneTranslation(int boneIdx, int frame)
 {
-    boost::python::list retval;
-    retval.append(ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Translation().x);
-    retval.append(ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Translation().y);
-    retval.append(ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Translation().z);
+    float *retval = (float *)malloc(sizeof(float) * 3);
+    if(retval==NULL)return NULL;
+    
+    retval[0]=ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Translation().x;
+    retval[1]=ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Translation().y;
+    retval[2]=ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Translation().z;
     return retval;
 }
 
-boost::python::list getBoneRotation(int boneIdx, int frame)
+DLLEXPORT float* getBoneRotation(int boneIdx, int frame)
 {
-    boost::python::list retval;
-    retval.append(ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Rotation().x);
-    retval.append(ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Rotation().y);
-    retval.append(ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Rotation().z);
-    retval.append(ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Rotation().w);
+    float *retval = (float *)malloc(sizeof(float) * 4);
+    if(retval==NULL)return NULL;
+    
+    retval[0]=ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Rotation().x;
+    retval[1]=ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Rotation().y;
+    retval[2]=ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Rotation().z;
+    retval[3]=ssdrOutput.boneTrans[frame * ssdrOutput.numBones + boneIdx].Rotation().w;
     return retval;
 }
 
-BOOST_PYTHON_MODULE(ssdr)
+DLLEXPORT void freeRetArr(void *p)
 {
-    boost::python::def("build", &build);
-    boost::python::def("getSkinningWeight", &getSkinningWeight);
-    boost::python::def("getSkinningIndex", &getSkinningIndex);
-    boost::python::def("getNumBones", &getNumBones);
-    boost::python::def("getBoneTranslation", &getBoneTranslation);
-    boost::python::def("getBoneRotation", &getBoneRotation);
+  free(p);
 }
