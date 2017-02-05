@@ -1,0 +1,4 @@
+clothtest3-step1.blend - Cloth simulation
+clothtest3-step2.blend - Shape-key Animation (Cloth Baked) http://blender.stackexchange.com/questions/42910/how-to-bake-object-with-cloth-simulation-and-subsurf-not-applied-having-troub
+clothtest3_result_4-20-2.blend - SSDR result (Bone Animation)
+
