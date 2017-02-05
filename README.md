@@ -1,6 +1,7 @@
 # SSDR4Blender
 * <A href="https://github.com/mukailab/ssdr4maya">SSDR4Maya</A>をBlenderへ移植したもの
 * 頂点アニメーションをボーンアニメーションに変換するソフト
+
 ## 対応環境
 * Windows XP以上 (自力でDLLをコンパイルできれば、Mac/Linuxも対応)
 * Blender2.65以上 (bl_info書き換えれば2.5.0以上でも動くかも)
