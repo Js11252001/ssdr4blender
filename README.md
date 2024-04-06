@@ -1,47 +1,47 @@
 # SSDR4Blender
-* <A href="https://github.com/mukailab/ssdr4maya">SSDR4Maya</A>をBlenderへ移植したもの
-* 頂点アニメーションをボーンアニメーションに変換するソフト
-
-## ダウンロード
-<A href="https://github.com/devil-tamachan/ssdr4blender/releases">こちらからどうぞ</A>
-
-## 対応環境
-* Windows XP以上 (自力でDLLをコンパイルできれば、Mac/Linuxも対応)
-* 32/64ビットのBlender2.65以上 (bl_info書き換えれば2.5.0以上でも動くかも)
-* Python3～ (.pydではなく普通のcdeclコールのdllをctypesから呼び出ししてます。Pythonのバージョンが変わっても再コンパイルの必要は無いです)
-
-## インストール方法
-* binフォルダにあるビルド済みパッケージ一式を、<A href="https://wiki.blender.org/index.php/Doc:JA/2.6/Manual/Extensions/Python/Add-Ons">Blenderのaddonsフォルダへコピーしてください</A>
-
-## 使用上の注意
-* あらかじめ頂点数の変化するModifierを事前にBakeしてください。
-* あらかじめCloth/Softbody Physicsを事前にBakeしてください。<A href="http://blender.stackexchange.com/questions/42910/how-to-bake-object-with-cloth-simulation-and-subsurf-not-applied-having-troub">標準でBakeする機能は無いです。.mddを経由してShape-keyアニメーションに変換してください。.mddを読み込んだあと、必ずPhysicsタブから物理演算を無効にしてください（２重効果になります）</A>
-
-###利用手順
-1. 処理対象となるシェイプを選択します。
-2. メニューの[Object]->[SSDR]より処理を開始します。
-3. 処理が終わったら、左下部分でパラメータを調整できます。numMaxIterationsを納得できる最小値に設定してください。頂点数が少なく結果がおかしい場合numMinBonesを減らして見てください。
-
-### 計算パラメータの調整
-
-- numMinBones： 頂点アニメーション近似に用いる最小ボーン数
-- numMaxIterations： 最大反復回数
-- numMaxInfluences： 各頂点当たりに割り当てられる最大ボーン数
-
-これら3つのパラメータの変更することで、それにともなう計算結果の変化を確認できると思います。現状では、最小ボーン数に大きな値を与えると計算が破綻することを確認しています。
-
-## ビルドと実行方法
-* 拡張ライブラリ ssdr.dll は 外部ライブラリとして [Eigen](http://eigen.tuxfamily.org/ "Eigen")、 [QuadProg++](http://quadprog.sourceforge.net/ "QuadProg++")が必要です。
-* EigenはCMakeする必要はありません！（とんでもなくめちゃくちゃ時間がかかります。コンパイルする必要はありません。Includeフォルダに設定するだけで良いです）
-* QuadProg++.cc、727行あたりのvoid cholesky_decomposition(Matrix<double>& A)関数の、throw～、exit(-1);の2行をコメントアウトしてください
+* <A href="https://github.com/mukailab/ssdr4maya">SSDR4Maya</A>移植到Blender的版本
+* 将顶点动画转换为骨骼动画的插件
 
 
-###ビルド手順
 
-1. Eigenのインストールフォルダにインクルードパスを通す。
-4. QuadProg++をダウンロードし、下記4つのファイルをssdrフォルダにコピーする。
+## 支持环境
+* Windows XP及以上版本（如果能自行编译DLL，则也支持Mac/Linux）
+* 支持32/64位的Blender2.65及以上版本（如果修改bl_info，也许能在2.5.0以上版本运行）
+* Python3～（使用普通的cdecl调用的dll，通过ctypes调用。Python版本变化时无需重新编译）
+
+## 安装方法
+*将bin文件夹中的已编译包全部复制到<A href="https://wiki.blender.org/index.php/Doc:JA/2.6/Manual/Extensions/Python/Add-Ons">Blender的addons文件夹中</A>
+
+## 使用须知
+* 请先对变化的Modifier进行Bake。
+* 请先对Cloth/Softbody Physics进行Bake。<A href="http://blender.stackexchange.com/questions/42910/how-to-bake-object-with-cloth-simulation-and-subsurf-not-applied-having-troub">标准的Bake功能是没有的。请通过.mdd转换为Shape-key动画。加载.mdd后，请一定要从Physics标签中禁用物理计算（否则会产生双重效果）</A>
+
+###使用步骤
+1. 选择处理的形状。
+2. 从菜单[Object]->[SSDR]开始处理。
+3. 处理完成后，可以在左下角调整参数。请将numMaxIterations设置为满意的最小值。如果顶点数较少导致结果异常，请尝试减少numMinBones。
+
+### 计算参数的调整
+
+
+- numMinBones： 用于顶点动画近似的最小骨骼数量
+- numMaxIterations： 最大迭代次数
+- numMaxInfluences： 每个顶点最多分配的骨骼数量
+
+通过改变这三个参数，可以观察到计算结果的变化。当前，我们已经确认如果给最小骨骼数量设置较大值，计算会出错。
+
+## 构建和执行方法
+* 扩展库ssdr.dll需要外部库[Eigen](http://eigen.tuxfamily.org/ "Eigen")、 [QuadProg++](http://quadprog.sourceforge.net/ "QuadProg++")。
+* 安装Eigen时不需要使用CMake！（这会花费很长时间，并且不需要编译。只需在Include文件夹中设置即可）
+* 请在QuadProg++.cc的727行左右的void cholesky_decomposition(Matrix<double>& A)函数中，将throw～、exit(-1);这两行注释掉
+
+
+### 构建步骤
+
+1. 设置包含Eigen安装文件夹的路径。
+4. 下载QuadProg++并将以下四个文件复制到ssdr文件夹中。
  * QuadProg++.hh
  * QuadProg++.cc
  * Array.hh
  * Array.cc
-5. Visual Studio 上でビルド＆実行
+5. 在Visual Studio上构建和执行
