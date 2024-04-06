@@ -10,7 +10,7 @@
 * Python3～（使用普通的cdecl调用的dll，通过ctypes调用。Python版本变化时无需重新编译）
 
 ## 安装方法
-*将bin文件夹中的已编译包全部复制到<A href="https://wiki.blender.org/index.php/Doc:JA/2.6/Manual/Extensions/Python/Add-Ons">Blender的addons文件夹中</A>
+*将bin文件夹中的已编译包全部复制到Blender的addons文件夹中</A>
 
 ## 使用须知
 * 请先对变化的Modifier进行Bake。
