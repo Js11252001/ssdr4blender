@@ -33,7 +33,7 @@ bl_info = {
     "description": "SSDR4Blender",
     "author": "tamachan (Porting)",
     "version": (0, 1),
-    "blender": (2, 65, 0),
+    "blender": (2, 85, 0),
     "support": "COMMUNITY",
     "category": "Animation"
     }
@@ -46,17 +46,17 @@ class ssdrBuildCmd(bpy.types.Operator):
     bl_label = "SSDR"
     bl_options = {'REGISTER', 'UNDO'}
 
-    # 最小ボーン数
+    # 最小骨骼数
     # - 指定した数以上のボーンは必ず利用される。また、ボーン数は基本的に2のべき乗になることが多い
     # 　（例： numBones=10 としたときは、10より大きい2のべき乗=2^4=16となることが多い）
     #numMinBones = bpy.props.IntProperty(name="MinBones", default=16, min=1, max=100)
-    numMinBones = bpy.props.IntProperty(name="MinBones", default=16, min=1, max=100)
+    numMinBones : bpy.props.IntProperty(name="MinBones", default=16, min=1, max=100)
     # 計算反復回数は、ボーン数に応じて適当に設定。
     #   あまり回数を増やしてもさほど影響は生じないことが多い。
-    numMaxIterations = bpy.props.IntProperty(name="MaxIterations", default=20, min=1, max=100)
+    numMaxIterations : bpy.props.IntProperty(name="MaxIterations", default=20, min=1, max=100)
     # 各頂点あたりの最大インフルーエンス数
     #numMaxInfluences = bpy.props.IntProperty(name="MaxInfluences", default=4, min=1, max=100)
-    numMaxInfluences = bpy.props.IntProperty(name="MaxInfluences", default=2, min=1, max=100)
+    numMaxInfluences : bpy.props.IntProperty(name="MaxInfluences", default=2, min=1, max=100)
 
     def execute(self, context):
         if platform.system() != 'Windows':
@@ -117,14 +117,17 @@ class ssdrBuildCmd(bpy.types.Operator):
             bindVertices += [v2[0], v2[1], v2[2]]
             animVertices += [v2[0], v2[1], v2[2]]
 
-        # 変換対象シェイプアニメーションの取得
+        # 获取要转换的形状动画
         for f in range(start_frame, end_frame+1):
             bpy.context.scene.frame_set(f)
-            cur_mesh = o.to_mesh(bpy.context.scene, True, 'PREVIEW')
+            dg = bpy.context.evaluated_depsgraph_get()
+            eval_obj  = o.evaluated_get(dg)
+            cur_mesh = eval_obj.to_mesh()
             for v in cur_mesh.vertices:
                 v2 = v.co
                 animVertices += [v2[0], v2[1], v2[2]]
-            bpy.data.meshes.remove(cur_mesh)
+            eval_obj.to_mesh_clear()
+
         # ひとまず先頭フレームに移動
         bpy.context.scene.frame_set(start_frame)
         # SSDR本体 : 戻り値は平方根平均二乗誤差（RMSE）
@@ -142,12 +145,12 @@ class ssdrBuildCmd(bpy.types.Operator):
         skinningWeight = ssdr.getSkinningWeight()
         skinningIndex = ssdr.getSkinningIndex()
 
+
         # 複製されるメッシュの名前を適当に指定
         #newSkinName = 'SsdrMesh'
         # メッシュの複製
         #cmds.duplicate(meshFn.name(), returnRootsOnly=True, name=newSkinName)
         o.modifiers.clear()
-        
         for f in range(start_frame, end_frame+1):
           bpy.context.scene.frame_set(f)
           for shape in o.data.shape_keys.key_blocks:
@@ -169,13 +172,13 @@ class ssdrBuildCmd(bpy.types.Operator):
 
         # 複製されたシェイプに紐付けるボーン群を生成
         # 
+
         arm = bpy.data.armatures.new('SSDRRigData')
         armObj = bpy.data.objects.new('SSDRRig', arm)
         armObj.matrix_world = o.matrix_world
-        scn = bpy.context.scene
+        scn = bpy.context.collection
         scn.objects.link(armObj)
-        scn.objects.active = armObj
-        scn.update()
+        bpy.context.view_layer.objects.active = armObj
         bpy.ops.object.editmode_toggle()
         
         #bpy.ops.object.mode_set(mode='EDIT')
@@ -189,15 +192,16 @@ class ssdrBuildCmd(bpy.types.Operator):
             
             bones.append(bone)
         
-        scn.update()
+        #bpy.context.view_layer.update()
         #bpy.ops.object.mode_set(mode='OBJECT')
-        
+        mesh_obj = bpy.data.objects.get(o.name)
+
         vgroups = []
         for i in range(numBones):
             bone = bones[i]
-            grp = o.vertex_groups.new(bone.name)
+            grp = mesh_obj.vertex_groups.new(name=bone.name)
             vgroups.append(grp)
-        
+            
         idx = 0
         for i in range(numVertices):
             for k in range(self.numMaxInfluences):
@@ -206,17 +210,16 @@ class ssdrBuildCmd(bpy.types.Operator):
                   vgroups[skinningIndex[idx]].add([i], skinningWeight[idx], 'REPLACE')
                 idx+=1
         
-        
         ssdr.freeRetArr(skinningWeight)
         ssdr.freeRetArr(skinningIndex)
         
-        mod = o.modifiers.new('SSDRArm', 'ARMATURE')
+        mod = mesh_obj.modifiers.new('SSDRArm', 'ARMATURE')
         mod.object = armObj
         mod.use_bone_envelopes = False
         mod.use_vertex_groups = True
         
         # ボーンモーションを設定
-        bpy.context.scene.objects.active = armObj
+        bpy.context.view_layer.objects.active = armObj
         bpy.ops.object.mode_set(mode='POSE')
         for f2 in range(start_frame, end_frame+1):
             bpy.context.scene.frame_set(f2)
@@ -225,6 +228,7 @@ class ssdrBuildCmd(bpy.types.Operator):
                 pbone = armObj.pose.bones[b]
                 t = ssdr.getBoneTranslation(b, f)
                 q = ssdr.getBoneRotation(b, f)
+
                 
                 pbone.location = (0, 0, 0)
                 
@@ -237,7 +241,7 @@ class ssdrBuildCmd(bpy.types.Operator):
                 
                 
                 pbone.matrix = mat7
-                
+
                 pbone.keyframe_insert(data_path = 'location', frame = f2)
                 pbone.keyframe_insert(data_path = 'rotation_quaternion', frame = f2)
                 #pbone.keyframe_insert(data_path = 'rotation_euler', frame = f2)
